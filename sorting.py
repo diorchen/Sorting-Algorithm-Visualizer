@@ -31,7 +31,7 @@ def main(): #main driver code that allows you to see window
 	sorting_algorithm_generator = None
 
 	while run: #loop that handles all occurring events during run
-		clock.tick(3) # 20 FPS, maximum number of times this loop can run per second
+		clock.tick(20) # 20 FPS, maximum number of times this loop can run per second
 
 		if sorting:
 			try:

@@ -1,4 +1,5 @@
 import drawLayout
+from random import randint
 
 def insertion_sort(draw_info, ascending=True):
 	lst = draw_info.lst
@@ -53,92 +54,82 @@ def selection_sort(draw_info, ascending = True):
             yield True    
     return lst
 
-
-def merge_sort(draw_info, ascending = True): 
+def merge_sort(draw_info, ascending=True): #calls merge_sort_helper function to yield to display in the window
     lst = draw_info.lst
+    yield from merge_sort_helper(draw_info, ascending, 0, len(lst))
 
-#     if len(lst) < 2:
-#         return lst[:]
-#     else:
-#         middle = len(lst) // 2
-#         left = merge_sort(lst[:middle], compare)
-#         right = merge_sort(lst[middle:], compare)
-#         lst = merge(left, right, compare)
-#     return lst
+def merge_sort_helper(draw_info, ascending, left, right): #merge function
+    lst = draw_info.lst
+    if left < right:
+        mid = int((left+right)/2)
+        yield from merge_sort_helper(draw_info, ascending, left, mid)
+        yield from merge_sort_helper(draw_info, ascending, mid+1, right)
+        for arr, newLeft, newRight in merge(lst, left, mid, right, ascending):
+            draw_info.lst = lst
+            drawLayout.draw_list(draw_info, {newLeft: draw_info.GREEN, newRight: draw_info.RED}, True) 
+            yield arr, newLeft, newRight
 
 
-# def merge(left, right, compare):
-#     result = []
-#     i = 0
-#     j = 0
-#     while (i < len(left) and j < len(right)):
-#         if compare(left[i], right[j]):
-#             result.append(left[i])
-#             i = i + 1
-#         else:
-#             result.append(right[j])
-#             j = j + 1
-#     while (i < len(left)):
-#         result.append(right[j])
-#         j = j + 1
-#     return result
-
-    if len(lst) > 1:
-        mid = len(lst) // 2 #creates 2 subarrays by dividing lst into 2
-        array1 = lst[:mid]
-        array2 = lst[mid:]
-
-    #sort independently
-    merge_sort(array1)
-    merge_sort(array2)
-
-    #initial values
-    i = 0 #initial index of left array
-    j = 0 #initial index of right array
-    k = 0 #initial index of merged array
-
-    while i < len(array1) and j < len(array2):
-        if array1[i] < array2[j]:
-            lst[k] = array1[i]
-            i = i + 1
+def merge(lst, left, mid, right, ascending): #merge function
+    L = lst[left:mid+1]
+    R = lst[mid+1:right+1]
+    i = 0
+    j = 0
+    k = left
+    multiplier = 1 
+    if not ascending:
+        multiplier = -1
+    while i < len(L) and j < len(R):
+        
+        if multiplier * L[i] < multiplier * R[j]:
+            lst[k] = L[i]
+            i += 1
         else:
-            lst[k] = array2[j]
-            j = j + 1
-        drawLayout.draw_list(draw_info, {i: draw_info.GREEN, i+1: draw_info.RED, j: draw_info.GREEN, j+1: draw_info.RED, k: draw_info.GREEN, k+1: draw_info.RED}, True)
-        yield True
-        k = k + 1
+            lst[k] = R[j]
+            j += 1
+        k += 1
+        yield lst, left+i, mid+j
+    
+    while i < len(L):
+        lst[k] = L[i]
+        i += 1
+        k += 1
+        yield lst, left+i, mid+j
 
-
-    while i < len(array1):
-        lst[k] = array1[i]
-        i = i + 1
-        k = k + 1
-        drawLayout.draw_list(draw_info, {i: draw_info.GREEN, i+1: draw_info.RED, k: draw_info.GREEN, k+1: draw_info.RED}, True)
-        yield True
-    while j < len(array2):
-        lst[k] = array2[j]
-        j = j + 1
-        k = k + 1
-        drawLayout.draw_list(draw_info, {j: draw_info.GREEN, j+1: draw_info.RED, k: draw_info.GREEN, k+1: draw_info.RED}, True)
-        yield True
-    return lst
+    while j < len(R):
+        lst[k] = R[j]
+        j += 1
+        k += 1
+        yield lst, left+i, mid+j
 
 
 
-def quick_sort(draw_info, ascending = True): 
+def quick_sort(draw_info, ascending = True): #calls quick_sort_helper function to yield display in window
     lst = draw_info.lst
+    yield from quick_sort_helper(draw_info, 0, len(lst)-1, ascending)
 
-    if(len(lst) > 1):
-        piv = int(len(lst)/2)
-        val = lst[piv]
-        left = [i for i in lst if i<val]
-        mid = [i for i in lst if i==val]
-        right = [i for i in lst if i>val]
 
-        result = quick_sort(left) + mid + quick_sort(right)
-        return result
-    else:
-        return lst
+def quick_sort_helper(draw_info, left, right, ascending): #quick sort function implementation
+    lst = draw_info.lst
+    multiplier = 1
+    if not ascending:
+        multiplier = -1
+
+    if left >= right:
+        return
+    index = left
+    random_index = randint(left, right)
+    lst[right], lst[random_index] = lst[random_index], lst[right]
+    
+    for j in range(left, right):
+        drawLayout.draw_list(draw_info, {j: draw_info.GREEN, index: draw_info.RED}, True) 
+        yield lst, j, index
+        if multiplier* lst[j] < multiplier * lst[right]:
+            lst[j], lst[index] = lst[index], lst[j]
+            index += 1
+    lst[index], lst[right] = lst[right], lst[index]
+    yield from quick_sort_helper(draw_info, index + 1, right, ascending)
+    yield from quick_sort_helper(draw_info, left, index - 1, ascending)
 
 
 def heap_sort(draw_info, ascending = True): 
@@ -162,8 +153,8 @@ def heapify(arr, N, i, ascending):
         multiplier = -1
     
     largest = i  # Initialize largest as root
-    l = 2 * i + 1     # left = 2*i + 1
-    r = 2 * i + 2     # right = 2*i + 2
+    l = 2 * i + 1     
+    r = 2 * i + 2     
  
     # See if left child of root exists and is
     # greater than root
